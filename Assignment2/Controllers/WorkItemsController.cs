@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace Assignment2.Controllers
 {
-    [Route("api")]
+    [Route("api/work-items")]
     [ApiController]
     public class Controller : ControllerBase
     {

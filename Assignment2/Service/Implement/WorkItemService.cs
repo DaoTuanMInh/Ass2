@@ -97,6 +97,7 @@ public class WorkItemService : IWorkItemService
             
         };
 
+        return new WorkItem();
 
 
     }
