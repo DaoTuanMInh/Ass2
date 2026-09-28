@@ -3,6 +3,7 @@ using Assignment2.Models;
 using Assignment2.Service.Interface;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Mathematics;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 namespace Assignment2.Service.Interface;
@@ -29,23 +30,23 @@ public class WorkItemService : IWorkItemService
     {
         var workitemID = await _db.WorkItems
             .FirstOrDefaultAsync(w => w.Id == id && !w.IsDeleted);
-        if(workitemID == null)
+        if (workitemID == null)
         {
             return false;
         }
         workitemID.IsDeleted = true;
         workitemID.DeletedAt = DateTime.Now;
         workitemID.UpdatedAt = DateTime.Now;
-            
+
         await _db.SaveChangesAsync();
         return true;
 
 
     }
-  
-    public async Task<WorkItemDto> AddWorkItem (AddWorkItem workItem)
+
+    public async Task<WorkItemDto> AddWorkItem(AddWorkItem workItem)
     {
-        var projectcode = await _db.Projects.Select(p =>p.Code).FirstOrDefaultAsync(p => p == workItem.ProjectCode);
+        var projectcode = await _db.Projects.Select(p => p.Code).FirstOrDefaultAsync(p => p == workItem.ProjectCode);
         if (projectcode == null)
         {
             throw new Exception("Không thấy projectcode");
@@ -60,7 +61,7 @@ public class WorkItemService : IWorkItemService
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            
+
             var Inputlabels = workItem.Labels
                 .Select(x => x.Trim().ToLower())
                 .Distinct()
@@ -85,7 +86,7 @@ public class WorkItemService : IWorkItemService
             {
                 Code = $"WI-{DateTime.Now.Year}-{count.ToString("D6")}",
                 Title = workItem.Title,
-                Description = workItem.Description, 
+                Description = workItem.Description,
                 Status = "Todo",
                 Priority = workItem.Priority,
                 ProjectId = getProducId,
@@ -103,7 +104,7 @@ public class WorkItemService : IWorkItemService
             List<WorkItemLabel> workItemLabels = labe
                 .Select(
                     x => new WorkItemLabel()
-                    {   
+                    {
                         LabelId = x,
                         WorkItemId = newWorkItem.Id
                     }
@@ -114,7 +115,7 @@ public class WorkItemService : IWorkItemService
             await _db.SaveChangesAsync();
 
             var a = new WorkItemDto()
-            { 
+            {
                 Id = newWorkItem.Id,
                 Code = newWorkItem.Code,
                 Title = newWorkItem.Title,
@@ -144,9 +145,9 @@ public class WorkItemService : IWorkItemService
     }
 
     public async Task<ItemDetailsDto> GetItemDetails(long id)
-    { 
+    {
         var items = await _db.WorkItems.FirstOrDefaultAsync(w => w.Id == id);
-        if(items == null)
+        if (items == null)
         {
             throw new InvalidOperationException("Item khong ton tai");
         }
@@ -178,7 +179,7 @@ public class WorkItemService : IWorkItemService
             FullName = assignee.FullName
         };
 
-        var labels =  _db.Labels
+        var labels = _db.Labels
             //.Where(x => x.WorkItems.Any(w => w.Id == id))
             .Select(x => x.Name)
             .OrderBy(name => name)
@@ -190,22 +191,22 @@ public class WorkItemService : IWorkItemService
             .ThenBy(h => h.Id)
             .Select(h => new HistoryDetails
             {
-            FromStatus = h.FromStatus,
-            ToStatus = h.ToStatus,
-            Note = h.Note,
-            ChangedBy = h.ChangedBy,
-            CreatedAt = h.CreatedAt
+                FromStatus = h.FromStatus,
+                ToStatus = h.ToStatus,
+                Note = h.Note,
+                ChangedBy = h.ChangedBy,
+                CreatedAt = h.CreatedAt
             })
             .ToList();
 
         var res = new ItemDetailsDto
         {
-            InforItems  = new List<WorkitemDetails> { itemDetails },
+            InforItems = new List<WorkitemDetails> { itemDetails },
             Projects = new List<ProjectDetails> { projectdetails },
             Assignee = new List<AssigneeDetail> { assigneeDetails },
             Labels = labels.Select(label => new Label
-            { 
-                Name = label 
+            {
+                Name = label
             })
             .ToList(),
             History = history,
@@ -329,5 +330,81 @@ public class WorkItemService : IWorkItemService
             total = total,
             items = items
         };
+    }
+
+    public async Task<List<WorkItem>> FileterHistory(DateTime startDate, DateTime endDate)
+    {
+        if (startDate > endDate)
+        {
+            throw new ArgumentException("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc");
+        }
+        var filter = new
+        {
+            From = startDate,
+            To = endDate
+        };
+        var Result = await _db.WorkItems
+            .Where(h => h.CreatedAt >= filter.From && h.CreatedAt <= filter.To)
+            .ToListAsync();
+
+        return Result;
+    }
+
+    public async Task<List<HistoryDto>> HistoryDetails(long id)
+    {
+        var query = _db.WorkItemHistories
+             .Include(q => q.WorkItem)
+             .Where(q => !q.WorkItem.IsDeleted);
+
+        if (id <= 0)
+        {
+            throw new ArgumentException("Id khong ton tai");
+        }
+        if (await query.FirstOrDefaultAsync(h => h.Id == id) == null)
+        {
+            throw new ArgumentException("Id item không tồn tại");
+        }
+        var history = await query
+            .Where(h => h.WorkItemId == id)
+            .OrderBy(h => h.CreatedAt)
+            .ThenBy(h => h.Id)
+            .Select(h => new HistoryDto
+            {
+                Id = h.Id,
+                FromStatus = h.FromStatus,
+                ToStatus = h.ToStatus,
+                Note = h.Note,
+                ChangedBy = h.ChangedBy,
+                CreatedAt = h.CreatedAt
+            })
+            .ToListAsync();
+        return history;
+    }
+
+    public async Task<WorkItemHistory> Note(long id, string note)
+    {
+        var query = await _db.WorkItems.FirstOrDefaultAsync(q => q.Id == id && !q.IsDeleted);
+        if (id < 0 && query == null)
+        {
+            throw new ArgumentException("Id không hợp lệ");
+        }
+
+        if(note == null)
+        {
+            throw new ArgumentException("không được để trống Note");
+        }
+        query.UpdatedAt = DateTime.Now;
+        var updateNote = new WorkItemHistory
+        {
+            WorkItemId = query.Id,
+            FromStatus = query.Status,
+            ToStatus = query.Status,
+            Note = note,
+            ChangedBy = "api",
+            CreatedAt = DateTime.Now
+        };
+        _db.WorkItemHistories.AddAsync(updateNote);
+        await _db.SaveChangesAsync();
+        return updateNote;
     }
 }

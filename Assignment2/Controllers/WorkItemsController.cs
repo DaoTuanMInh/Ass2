@@ -27,7 +27,6 @@ namespace Assignment2.Controllers
                 return StatusCode(503, new
                 {
                     traceId = HttpContext.TraceIdentifier,
-                    status = "503",
                     message = "thất bại",
                     data = new { status = "ok", dbConnected = false }
                 });
@@ -36,7 +35,6 @@ namespace Assignment2.Controllers
             return Ok(new
             {
                 traceId = HttpContext.TraceIdentifier,
-                status = "200",
                 message = "Thành công",
                 data = new { status = "available", dbConnected = true }
             });
@@ -77,23 +75,23 @@ namespace Assignment2.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
-        //[HttpPatch("work-items/{id}/assignee")]
-        //public async Task<IActionResult> AssignWorkItem( long id, AssigneeItem assigneeItem)
-        //{
-        //    try
-        //    {
-        //        var result = await _workItemService.AssigItem(id, assigneeItem);
-        //        if (!result)
-        //        {
-        //            return NotFound();
-        //        }
-        //        return Ok();
-        //    }
-        //    catch (InvalidOperationException ex)
-        //    {
-        //        return NotFound(new { message = ex.Message });
-        //    }
-        //}
+        [HttpPatch("work-items/{id}/assignee")]
+        public async Task<IActionResult> AssignWorkItem(long id, AssigneeItem assigneeItem)
+        {
+            try
+            {
+                var result = await _workItemService.AssigItem(id, assigneeItem);
+                if (!result)
+                {
+                    return NotFound();
+                }
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
         [HttpGet]
         public async Task<IActionResult> GetList([FromQuery] WorkItemFilterDto filter)
         {
@@ -106,5 +104,45 @@ namespace Assignment2.Controllers
                 data = result
             });
         }
+        [HttpGet("filter-history")]
+        public async Task<IActionResult> FilterHistory([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        {
+            try
+            {
+                var filter = await _workItemService.FileterHistory(startDate, endDate);
+                return Ok(filter);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpGet("{id}/history")]
+        public async Task<IActionResult> HistoryDetails(long id)
+        {
+            try
+            {
+                var his = await _workItemService.HistoryDetails(id);
+                return Ok(his);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpPost("{id}/notes")]
+        public async Task<IActionResult> Note(long id,[FromBody] string note)
+        {
+            try
+            {
+                var res = await _workItemService.Note(id,note);
+                return Ok(res);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
     }
 }

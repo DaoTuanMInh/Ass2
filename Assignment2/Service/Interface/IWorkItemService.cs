@@ -13,6 +13,10 @@ namespace Assignment2.Service.Interface
 
         public Task<bool> AssigItem(long id, AssigneeItem assigneeItem);
 
-        Task<object> GetWorkItemsList(WorkItemFilterDto filter);
+        public Task<object> GetWorkItemsList(WorkItemFilterDto filter);
+
+        public Task<List<WorkItem>> FileterHistory(DateTime startDate, DateTime endDate);
+        public Task<List<HistoryDto>> HistoryDetails(long id);
+        public Task<WorkItemHistory> Note(long id, string note);
     }
 }
