@@ -1,4 +1,5 @@
-﻿using Assignment2.DTOs;
+﻿using Assignment2.Common;
+using Assignment2.DTOs;
 using Assignment2.Service.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -69,12 +70,41 @@ namespace Assignment2.Controllers
             try
             {
                 var newWorkItem = await _workItemService.AddWorkItem(workItem);
-                return CreatedAtAction(nameof(GetItemDetails), new { id = newWorkItem}, newWorkItem);
+                return Ok(newWorkItem);
             }
             catch (Exception ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
+        }
+        //[HttpPatch("work-items/{id}/assignee")]
+        //public async Task<IActionResult> AssignWorkItem( long id, AssigneeItem assigneeItem)
+        //{
+        //    try
+        //    {
+        //        var result = await _workItemService.AssigItem(id, assigneeItem);
+        //        if (!result)
+        //        {
+        //            return NotFound();
+        //        }
+        //        return Ok();
+        //    }
+        //    catch (InvalidOperationException ex)
+        //    {
+        //        return NotFound(new { message = ex.Message });
+        //    }
+        //}
+        [HttpGet]
+        public async Task<IActionResult> GetList([FromQuery] WorkItemFilterDto filter)
+        {
+            var result = await _workItemService.GetWorkItemsList(filter);
+            return Ok(new
+            {
+                traceId = HttpContext.TraceIdentifier,
+                status = 200,
+                message = "Thành công",
+                data = result
+            });
         }
     }
 }

@@ -6,10 +6,13 @@ namespace Assignment2.Service.Interface
     public interface IWorkItemService
     {
         public Task<bool> HealChecK();
-        public Task<WorkItem> AddWorkItem(AddWorkItem workItem);
+        public Task<WorkItemDto> AddWorkItem(AddWorkItem workItem);
         public Task<bool> Delete(long id);
 
         public Task<ItemDetailsDto> GetItemDetails(long id);
 
+        public Task<bool> AssigItem(long id, AssigneeItem assigneeItem);
+
+        Task<object> GetWorkItemsList(WorkItemFilterDto filter);
     }
 }

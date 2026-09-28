@@ -1,4 +1,5 @@
 using Assignment2.Models;
+using Assignment2.Service.Implement;
 using Assignment2.Service.Interface;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,8 +13,15 @@ builder.Services.AddDbContext<Ass2Context>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     );
 });
+
 builder.Services.AddTransient<IWorkItemService, WorkItemService>();
-builder.Services.AddControllers();
+builder.Services.AddTransient<IReportProjectService, ReportProjectService>();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

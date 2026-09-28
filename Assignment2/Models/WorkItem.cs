@@ -39,5 +39,5 @@ public partial class WorkItem
 
     public virtual ICollection<WorkItemHistory> WorkItemHistories { get; set; } = new List<WorkItemHistory>();
 
-    public virtual ICollection<Label> Labels { get; set; } = new List<Label>();
+    public virtual ICollection<WorkItemLabel> WorkItemLabels { get; set; } = new List<WorkItemLabel>();
 }

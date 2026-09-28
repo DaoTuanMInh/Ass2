@@ -13,6 +13,6 @@ namespace Assignment2.DTOs
         public long? AssigneeId { get; set; }
         public string Priority { get; set; } = null!;
         public DateTime? DueAt { get; set; }
-        public virtual List<string> Labels { get; set; } = new List<string>();
+        public virtual string[] Labels { get; set; } 
     }
 }

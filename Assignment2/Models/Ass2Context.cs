@@ -25,12 +25,34 @@ public partial class Ass2Context : DbContext
 
     public virtual DbSet<WorkItemHistory> WorkItemHistories { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=10.8.0.1;Port=5432;Database=Ass2;Username=postgres;Password=arPNmdJER6m42346", x => x.UseNetTopologySuite());
+    public virtual DbSet<WorkItemLabel> WorkItemLabels { get; set; }
+
+    //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+    //        => optionsBuilder.UseNpgsql("Host=10.8.0.1;Port=5432;Database=Ass2;Username=postgres;Password=arPNmdJER6m42346", x => x.UseNetTopologySuite());
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<WorkItemLabel>(entity =>
+        {
+            entity.ToTable("work_item_labels");
+            entity.HasKey(e => new { e.WorkItemId, e.LabelId }).HasName("work_item_labels_pkey");
+            entity.Property(e => e.WorkItemId).HasColumnName("work_item_id");
+            entity.Property(e => e.LabelId).HasColumnName("label_id");
+        });
+
+
+        modelBuilder.Entity<WorkItemLabel>()
+            .HasOne(x => x.workItem)
+            .WithMany(x => x.WorkItemLabels)
+            .HasForeignKey(x => x.WorkItemId);
+
+        modelBuilder.Entity<WorkItemLabel>()
+            .HasOne(x => x.label)
+            .WithMany(x => x.WorkItemLabels)
+            .HasForeignKey(x => x.LabelId);
+
+
         modelBuilder.Entity<Developer>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("developers_pkey");
@@ -144,23 +166,23 @@ public partial class Ass2Context : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("work_items_project_id_fkey");
 
-            entity.HasMany(d => d.Labels).WithMany(p => p.WorkItems)
-                .UsingEntity<Dictionary<string, object>>(
-                    "WorkItemLabel",
-                    r => r.HasOne<Label>().WithMany()
-                        .HasForeignKey("LabelId")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("work_item_labels_label_id_fkey"),
-                    l => l.HasOne<WorkItem>().WithMany()
-                        .HasForeignKey("WorkItemId")
-                        .HasConstraintName("work_item_labels_work_item_id_fkey"),
-                    j =>
-                    {
-                        j.HasKey("WorkItemId", "LabelId").HasName("work_item_labels_pkey");
-                        j.ToTable("work_item_labels");
-                        j.IndexerProperty<long>("WorkItemId").HasColumnName("work_item_id");
-                        j.IndexerProperty<long>("LabelId").HasColumnName("label_id");
-                    });
+            //entity.HasMany(d => d.Labels).WithMany(p => p.label)
+            //    .UsingEntity<Dictionary<string, object>>(
+            //        "WorkItemLabel",
+            //        r => r.HasOne<Label>().WithMany()
+            //            .HasForeignKey("LabelId")
+            //            .OnDelete(DeleteBehavior.ClientSetNull)
+            //            .HasConstraintName("work_item_labels_label_id_fkey"),
+            //        l => l.HasOne<WorkItem>().WithMany()
+            //            .HasForeignKey("WorkItemId")
+            //            .HasConstraintName("work_item_labels_work_item_id_fkey"),
+            //        j =>
+            //        {
+            //            j.HasKey("WorkItemId", "LabelId").HasName("work_item_labels_pkey");
+            //            j.ToTable("work_item_labels");
+            //            j.IndexerProperty<long>("WorkItemId").HasColumnName("work_item_id");
+            //            j.IndexerProperty<long>("LabelId").HasColumnName("label_id");
+            //        });
         });
 
         modelBuilder.Entity<WorkItemHistory>(entity =>

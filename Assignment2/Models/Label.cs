@@ -9,5 +9,5 @@ public partial class Label
 
     public string Name { get; set; } = null!;
 
-    public virtual ICollection<WorkItem> WorkItems { get; set; } = new List<WorkItem>();
+    public virtual ICollection<WorkItemLabel> WorkItemLabels { get; set; } = new List<WorkItemLabel>();
 }
